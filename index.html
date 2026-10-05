@@ -41,6 +41,9 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 .card h2{margin:0 0 4px;font-size:18px;font-weight:600;color:var(--gold)}
 .card p{font-size:13px;color:var(--dim);line-height:1.7;margin:6px 0}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#ph{position:relative;overflow:hidden}#phImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#panel input[type=range]{width:100%}.soc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.soc a,.soc span{font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--ice);text-decoration:none;background:#141935}.soc a:hover{border-color:var(--gold)}
 @media(max-width:600px){#panel{top:auto;height:72%;width:100%;border-left:0;border-top:1px solid var(--line);transform:translateY(100%)}h1{width:100%;margin:0}}
 @media(prefers-reduced-motion:reduce){#panel{transition:none}}
 </style>
@@ -55,23 +58,33 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
   <button class="btn" id="imp">导入数据</button>
   <button class="btn" id="tgPh"></button>
   <button class="btn" id="tgAuto"></button>
+  <button class="btn" id="tg2d"></button>
   <button class="btn" id="rst">重置视角</button>
   <button class="btn" id="inv">复制查看链接</button>
   <button class="btn" id="invE">复制编辑链接</button>
   <button class="btn" id="reload">载入线上版本</button>
   <button class="btn" id="joinBtn">申请加入</button>
   <button class="btn" id="rev">审核申请</button>
+  <select id="lang" class="btn" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select>
   <input type="file" id="impf" accept=".json" hidden>
 </header>
 <div id="empty">星空还是空的<br>点「添加成员」点亮第一颗星</div>
-<div id="legend"><span><i style="background:var(--gold)"></i>在世</span><span><i style="background:var(--ice)"></i>已故</span><span>拖动旋转 · Shift/右键拖动平移 · 滚轮缩放</span><span id="modeTxt"></span></div>
+<div id="legend"><span><i style="background:var(--gold)"></i>在世</span><span><i style="background:var(--ice)"></i>已故</span><span id="hint"></span><span id="modeTxt"></span></div>
 
 <aside id="panel" aria-label="成员资料">
   <button id="close" aria-label="关闭">×</button>
-  <div id="ph" title="点击上传照片">上传照片</div>
+  <div id="ph" title="点击上传照片"><img id="phImg" alt=""><span id="phTxt">上传照片</span></div>
   <input type="file" id="phf" accept="image/*" hidden>
+  <div id="phAdj" hidden>
+    <label for="pr">旋转角度</label><input type="range" id="pr" min="-180" max="180">
+    <label for="pz">放大</label><input type="range" id="pz" min="1" max="3" step="0.05">
+    <label for="px">左右移动</label><input type="range" id="px" min="-50" max="50">
+    <label for="py">上下移动</label><input type="range" id="py" min="-50" max="50">
+    <button class="btn" id="prR" style="margin-top:8px">重置照片</button>
+  </div>
   <div class="rels row"><button class="btn" data-rel="parent">＋父母</button><button class="btn" data-rel="spouse">＋配偶</button><button class="btn" data-rel="child">＋子女</button><button class="btn" data-rel="sibling">＋兄弟姐妹</button></div>
   <label for="name">姓名</label><input type="text" id="name">
+  <label for="cname">华语名字（中文名）</label><input type="text" id="cname" placeholder="王小明">
   <div class="row">
     <div><label for="gender">性别</label><select id="gender"><option value="">未填</option><option value="m">男</option><option value="f">女</option></select></div>
     <div><label for="birth">生日 / 出生年份</label><input type="text" id="birth" placeholder="1950-03-12"></div>
@@ -85,6 +98,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
   </div>
   <label for="spouse">配偶</label><select id="spouse"></select>
   <label for="note">备注 / 生平</label><textarea id="note"></textarea>
+  <div id="socWrap"><label>社交链接</label><div id="socIn"></div></div><div id="socView" class="soc"></div>
   <p class="tip">修改会自动保存在本浏览器中。要让所有访客看到，请点「导出数据」，把下载的文件改名为 data.json 放进 GitHub 仓库。</p>
   <button class="btn danger" id="del">删除这位成员</button>
 </aside>
@@ -94,6 +108,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 <h2>申请加入家族星图</h2>
 <p>填写你的资料，选择你是星图里哪位成员的亲人，把申请发给站长。审核通过后，你会成为星图里的一颗新星。</p>
 <label for="jn">你的姓名</label><input type="text" id="jn">
+<label for="jc">华语名字（中文名，可选）</label><input type="text" id="jc">
 <div class="row"><div><label for="jg">性别</label><select id="jg"><option value="">未填</option><option value="m">男</option><option value="f">女</option></select></div>
 <div><label for="jb">生日 / 出生年份</label><input type="text" id="jb" placeholder="1990"></div></div>
 <label class="chk"><input type="checkbox" id="ja" checked> 仍在世</label>
@@ -122,6 +137,39 @@ const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
 let people = [], sel = null, view = {x:0,y:0,k:1}, W, H, DPR = 1;
 const imgs = {};
+const START_2D = false; // 首次打开是否默认显示 2D 平面图
+let lang; try{lang=localStorage.getItem('xingpu-lang')}catch(e){} lang=lang||(/^zh/i.test(navigator.language)?'zh':'en');
+let dirty2=true; const SER=(k,v)=>k[0]==='_'?undefined:v;
+const DICT={'星谱':'Star Map','添加成员':'Add member','整理星图':'Auto-arrange','导出数据':'Export data','导入数据':'Import data',
+'显示：照片':'Show: Photos','显示：星星':'Show: Stars','自动旋转：开':'Auto-rotate: On','自动旋转：关':'Auto-rotate: Off','视图：3D':'View: 3D','视图：2D':'View: 2D',
+'重置视角':'Reset view','复制查看链接':'Copy view link','复制编辑链接':'Copy edit link','载入线上版本':'Load online version','申请加入':'Request to join','审核申请':'Review requests','链接已复制 ✓':'Link copied ✓',
+'在世':'Living','已故':'Deceased','拖动旋转 · Shift/右键拖动平移 · 滚轮缩放':'Drag to rotate · Shift/right-drag to pan · Scroll to zoom','拖动平移 · 滚轮缩放':'Drag to pan · Scroll to zoom',
+'实时家族星图 · 显示站长发布的最新资料':'Live family star map · latest data from the site owner',
+'编辑模式（本机草稿）：修改只保存在这台设备，完成后点「导出数据」发给站长':'Edit mode (local draft): changes stay on this device. When done, click “Export data” and send it to the site owner',
+'编辑模式：修改只保存在这台设备，完成后点「导出数据」发给站长':'Edit mode: changes stay on this device. When done, click “Export data” and send it to the site owner',
+'还没有发布家族资料':'No family data has been published yet','请稍后再来看看':'Please check back later','星空还是空的':'The sky is still empty','点「添加成员」点亮第一颗星':'Click “Add member” to light the first star',
+'上传照片':'Upload photo','旋转角度':'Rotation','放大':'Zoom','左右移动':'Move left/right','上下移动':'Move up/down','重置照片':'Reset photo','姓名':'Name','华语名字（中文名）':'Chinese name',
+'性别':'Gender','未填':'Not set','男':'Male','女':'Female','生日 / 出生年份':'Birthday / birth year','仍在世':'Still living','逝世日期 / 年份':'Date / year of passing','出生地 / 居住地':'Birthplace / residence',
+'父亲':'Father','母亲':'Mother','配偶':'Spouse','备注 / 生平':'Notes / biography','社交链接':'Social links','其他链接':'Other link','小红书':'Xiaohongshu (RED)','删除这位成员':'Delete this member',
+'＋父母':'+ Parent','＋配偶':'+ Spouse','＋子女':'+ Child','＋兄弟姐妹':'+ Sibling','子女':'Child','父母':'Parent','兄弟姐妹':'Sibling',
+'修改会自动保存在本浏览器中。要让所有访客看到，请点「导出数据」，把下载的文件改名为 data.json 放进 GitHub 仓库。':'Changes are saved automatically in this browser. To show them to everyone, click “Export data”, rename the file to data.json and upload it to your GitHub repository.',
+'申请加入家族星图':'Request to join the family star map','填写你的资料，选择你是星图里哪位成员的亲人，把申请发给站长。审核通过后，你会成为星图里的一颗新星。':'Fill in your details and choose which member you are related to, then send the request to the site owner. Once approved, you will become a new star.',
+'你的姓名':'Your name','华语名字（中文名，可选）':'Chinese name (optional)','我是（成员）的（关系）':'I am the (relation) of (member)','照片（可选）':'Photo (optional)','想说的话（可选）':'Message (optional)',
+'提交到 GitHub':'Submit via GitHub','复制申请内容':'Copy request text','下载申请文件':'Download request file','照片只会放进「下载申请文件」；复制内容和 GitHub 提交只含文字。':'The photo is only included in the downloaded file; copied text and GitHub submissions contain text only.',
+'请选择成员':'Select a member','审核加入申请':'Review join requests','粘贴亲人发来的申请内容，或选择申请文件，确认后再接受。':'Paste the request you received, or choose the request file, then confirm.',
+'读取':'Read','接受并加入':'Accept and add','清除':'Clear','读取失败：请粘贴完整的申请内容（以 { 开头），或选择申请文件。':'Could not read it. Paste the complete request (starting with {) or choose the request file.',
+'请填写你的姓名':'Please enter your name','请选择你是哪位成员的亲人':'Please choose which member you are related to','已复制，请发给站长（WhatsApp、微信或邮件都可以）。':'Copied. Send it to the site owner (WhatsApp, WeChat or email all work).',
+'复制申请内容：':'Copy the request text:','找不到对应成员。':'Member not found.','已有配偶，请先在“配偶”栏更改。':'This person already has a spouse. Change it in the Spouse field first.','已有两位父母。':'Already has two parents.',
+'复制这个查看链接发给亲人：':'Copy this view link and send it to your relatives:','复制这个编辑链接发给要补充资料的亲人：':'Copy this edit link and send it to relatives who will add details:',
+'放弃本机草稿，改用线上最新版本？':'Discard the local draft and use the latest online version?','读不到线上的 data.json。请在已发布的网站上使用此功能（本地直接打开文件时无法读取）。':'Could not read the online data.json. Use this on the published site (it cannot be read when opening the file locally).',
+'文件格式不正确，请选择由本站导出的 JSON 文件。':'Invalid file. Please choose a JSON file exported from this site.',
+'合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部':'Merge into existing data?\nOK = merge (same members use the new file); Cancel = replace everything with the new file'};
+const L=(zh,en)=>lang==='en'?en:zh, T=m=>lang==='en'&&DICT[m]||m;
+const _al=alert,_cf=confirm,_pr=prompt; window.alert=m=>_al(T(m)); window.confirm=m=>_cf(T(m)); window.prompt=(m,v)=>_pr(T(m),v);
+const names=p=>{ const a=(p.name||'').trim(), b=(p.cname||'').trim(); if(!a&&!b) return [L('未命名','Unnamed'),''];
+  const [x,y]=lang==='zh'?[b||a,b?a:'']:[a||b,a?b:'']; return [x,y&&y!==x?y:'']; };
+function drawPh(im,x,y,r,p){ const w=im.naturalWidth,h=im.naturalHeight,sc=2*r/Math.min(w,h)*(p.pz||1);
+  ctx.save(); ctx.translate(x+(p.px||0)/100*r,y+(p.py||0)/100*r); ctx.rotate((p.pr||0)*Math.PI/180); ctx.drawImage(im,-w*sc/2,-h*sc/2,w*sc,h*sc); ctx.restore(); }
 
 /* ---------- 数据 ---------- */
 const sample = () => [
@@ -131,7 +179,7 @@ const sample = () => [
   {id:'b2',name:'妈妈',gender:'f',birth:'1965-11-20',alive:true,spouse:'b1',parents:[]},
   {id:'c1',name:'我',gender:'',birth:'1992-02-14',alive:true,parents:['b1','b2']}
 ];
-function save(){ if(READONLY) return; try{localStorage.setItem(KEY,JSON.stringify(people))}catch(e){} }
+function save(){ dirty2=true; if(READONLY) return; try{localStorage.setItem(KEY,JSON.stringify(people,SER))}catch(e){} }
 let draft=false;
 const fetchLive=()=>fetch('data.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>Array.isArray(d)?d:Promise.reject());
 function load(){
@@ -142,14 +190,15 @@ function load(){
 function start(){
   if(people.some(p=>p.x==null||p.z==null)) layout();
   $('modeTxt').textContent=READONLY?'实时家族星图 · 显示站长发布的最新资料':(draft?'编辑模式（本机草稿）':'编辑模式')+'：修改只保存在这台设备，完成后点「导出数据」发给站长';
-  resize(); fit(); toggleEmpty();
+  resize(); fit(); toggleEmpty(); setHint(); syncB();
 }
 const byId = id => people.find(p=>p.id===id);
 const toggleEmpty = () => { $('empty').style.display = people.length ? 'none':'grid'; $('empty').innerHTML = READONLY ? '还没有发布家族资料<br>请稍后再来看看' : '星空还是空的<br>点「添加成员」点亮第一颗星'; };
 const year = s => (s||'').slice(0,4);
 
 /* ---------- 布局：按辈分分行，配偶相邻 ---------- */
-function layout(){
+function layout(tidy){
+  const X=q=>tidy?q._x2:q.x;
   const gen = {};
   const g = p => { if(gen[p.id]!=null) return gen[p.id]; gen[p.id]=0;
     let v = 0; (p.parents||[]).forEach(i=>{const q=byId(i); if(q) v=Math.max(v,g(q)+1)}); return gen[p.id]=v; };
@@ -159,13 +208,14 @@ function layout(){
   people.forEach(p=>(rows[gen[p.id]] = rows[gen[p.id]]||[]).push(p));
   Object.keys(rows).sort((a,b)=>a-b).forEach(k=>{
     const r = rows[k];
-    const key = p => { const xs=(p.parents||[]).map(byId).filter(q=>q&&q.x!=null).map(q=>q.x); return xs.length? xs.reduce((a,b)=>a+b)/xs.length : 0 };
+    const key = p => { const xs=(p.parents||[]).map(byId).filter(q=>q&&X(q)!=null).map(X); return xs.length? xs.reduce((a,b)=>a+b)/xs.length : 0 };
     r.sort((a,b)=>key(a)-key(b));
     const out=[], seen=new Set();
     r.forEach(p=>{ if(seen.has(p.id))return; seen.add(p.id); out.push(p);
       const s=byId(p.spouse); if(s&&!seen.has(s.id)&&r.includes(s)){seen.add(s.id);out.push(s)} });
-    out.forEach((p,i)=>{ p.x = (i-(out.length-1)/2)*150; p.y = k*170 + (i%2?14:-14); });
+    out.forEach((p,i)=>{ if(tidy){ p._x2=(i-(out.length-1)/2)*170; p._y2=k*190; } else { p.x = (i-(out.length-1)/2)*150; p.y = k*170 + (i%2?14:-14); } });
   });
+  if(tidy) return;
   const root = p=>{ let c=p,n=0; while(n++<50){ const q=byId((c.parents||[])[0])||byId((c.parents||[])[1]); if(!q) break; c=q; } return c.id; };
   const roots=[...new Set(people.map(root))];
   people.forEach(p=>p.z=(roots.indexOf(root(p))-(roots.length-1)/2)*130);
@@ -174,8 +224,9 @@ function layout(){
 }
 function fit(){
   if(!people.length){ ctr={x:0,y:0,z:0}; view={x:W/2,y:H/2,k:1}; return }
-  const mm=a=>[Math.min(...a),Math.max(...a)];
-  const [x0,x1]=mm(people.map(p=>p.x)),[y0,y1]=mm(people.map(p=>p.y)),[z0,z1]=mm(people.map(p=>p.z||0));
+  if(M2) layout(true);
+  const X=p=>M2?p._x2:p.x, Y=p=>M2?p._y2:p.y, mm=a=>[Math.min(...a),Math.max(...a)];
+  const [x0,x1]=mm(people.map(X)),[y0,y1]=mm(people.map(Y)),[z0,z1]=mm(people.map(p=>M2?0:(p.z||0)));
   ctr={x:(x0+x1)/2,y:(y0+y1)/2,z:(z0+z1)/2};
   view.k=Math.min(1.2,W/(x1-x0+260),H/(y1-y0+280)); view.x=W/2; view.y=H/2;
 }
@@ -183,6 +234,7 @@ function fit(){
 /* ---------- 绘制（3D） ---------- */
 let bg=[], cam={yaw:.4,pitch:.3}, auto=false, showPhoto=true, ctr={x:0,y:0,z:0}, D=1100;
 try{ showPhoto=localStorage.getItem(KEY+'-ph')!=='0' }catch(e){}
+let M2=START_2D; try{ const v=localStorage.getItem(KEY+'-2d'); if(v!=null) M2=v==='1' }catch(e){}
 function resize(){
   DPR=window.devicePixelRatio||1; W=innerWidth; H=innerHeight;
   cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -191,6 +243,7 @@ function resize(){
 const R=26;
 const colorOf=p=>p.alive===false?'159,196,255':'255,217,138';
 function proj(p){
+  if(M2) return {sx:view.x+(p._x2-ctr.x)*view.k,sy:view.y+(p._y2-ctr.y)*view.k,f:1,z:0};
   const ca=Math.cos(cam.yaw),sa=Math.sin(cam.yaw),cb=Math.cos(cam.pitch),sb=Math.sin(cam.pitch);
   const x=p.x-ctr.x,y=p.y-ctr.y,z=(p.z||0)-ctr.z;
   const x1=x*ca+z*sa,z1=-x*sa+z*ca,y2=y*cb-z1*sb,z2=y*sb+z1*cb;
@@ -203,7 +256,8 @@ function frame(t){
   gr.addColorStop(0,'#141a3c'); gr.addColorStop(1,'#070914'); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
   bg.forEach(s=>{ const px=((s.x-cam.yaw*500*s.z)%W+W)%W, py=((s.y+cam.pitch*500*s.z)%H+H)%H;
     ctx.globalAlpha=.35+.35*Math.sin(t/900+s.t); ctx.fillStyle='#cfd6ff'; ctx.beginPath(); ctx.arc(px,py,s.r,0,7); ctx.fill(); });
-  if(auto&&!drag) cam.yaw-=.003;
+  if(auto&&!drag&&!M2) cam.yaw-=.003;
+  if(M2&&dirty2){ layout(true); dirty2=false; }
   people.forEach(p=>p._s=proj(p));
   // 连线
   people.forEach(p=>{
@@ -232,7 +286,7 @@ function frame(t){
     if(showPhoto){
       ctx.save(); ctx.beginPath(); ctx.arc(s.sx,s.sy,rr,0,7); ctx.clip();
       const im=photo(p);
-      if(im) ctx.drawImage(im,s.sx-rr,s.sy-rr,rr*2,rr*2); else { ctx.fillStyle='rgb('+c+')'; ctx.fillRect(s.sx-rr,s.sy-rr,rr*2,rr*2); }
+      ctx.fillStyle='rgb('+c+')'; ctx.fillRect(s.sx-rr,s.sy-rr,rr*2,rr*2); if(im) drawPh(im,s.sx,s.sy,rr,p);
       ctx.restore();
       ctx.lineWidth=isSel?3:1.6; ctx.strokeStyle='rgb('+c+')'; ctx.beginPath(); ctx.arc(s.sx,s.sy,rr,0,7); ctx.stroke();
     } else {
@@ -244,9 +298,10 @@ function frame(t){
     }
     const fs=Math.max(9,15*view.k*s.f);
     ctx.textAlign='center'; ctx.fillStyle='#e8e9f5'; ctx.font='600 '+fs+'px "Noto Serif SC","Songti SC",serif';
-    ctx.fillText(p.name||'未命名',s.sx,s.sy+edge+fs*1.3);
+    const [n1,n2]=names(p); let yy=s.sy+edge+fs*1.3; ctx.fillText(n1,s.sx,yy);
+    if(n2){ yy+=fs*1.15; ctx.fillStyle='#c9cdea'; ctx.font=(fs*.85)+'px "Noto Serif SC",serif'; ctx.fillText(n2,s.sx,yy); }
     const yrs=year(p.birth)?year(p.birth)+(alive?'':' – '+(year(p.death)||'?')):'';
-    if(yrs){ ctx.fillStyle='#8d93b8'; ctx.font=(fs*.8)+'px "Noto Serif SC",serif'; ctx.fillText(yrs,s.sx,s.sy+edge+fs*2.4); }
+    if(yrs){ yy+=fs*1.1; ctx.fillStyle='#8d93b8'; ctx.font=(fs*.8)+'px "Noto Serif SC",serif'; ctx.fillText(yrs,s.sx,yy); }
   });
   ctx.globalAlpha=1;
   requestAnimationFrame(frame);
@@ -270,7 +325,7 @@ cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pts.size===2){ drag=null; const [a,b]=[...pts.values()]; pinch=Math.hypot(a.x-b.x,a.y-b.y)||1; mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2}; return; }
   const p=hit(e.clientX,e.clientY);
-  drag={type:p?'node':(e.shiftKey||e.button===2?'pan':'orbit'),p,d:0,moved:false,lx:e.clientX,ly:e.clientY};
+  drag={type:p?'node':(M2||e.shiftKey||e.button===2?'pan':'orbit'),p,d:0,moved:false,lx:e.clientX,ly:e.clientY};
   cv.classList.add('drag');
 });
 cv.addEventListener('pointermove',e=>{
@@ -280,7 +335,7 @@ cv.addEventListener('pointermove',e=>{
   if(!drag) return;
   const dx=e.clientX-drag.lx, dy=e.clientY-drag.ly; drag.lx=e.clientX; drag.ly=e.clientY;
   drag.d+=Math.abs(dx)+Math.abs(dy); if(drag.d>4) drag.moved=true; if(!drag.moved) return;
-  if(drag.type==='node'){ if(!READONLY) nodeMove(drag.p,dx,dy); }
+  if(drag.type==='node'){ if(!READONLY&&!M2) nodeMove(drag.p,dx,dy); }
   else if(drag.type==='pan'){ view.x+=dx; view.y+=dy; }
   else { cam.yaw-=dx*.006; cam.pitch=Math.max(-1.4,Math.min(1.4,cam.pitch+dy*.006)); }
 });
@@ -294,7 +349,7 @@ function zoomAt(x,y,f){ const k=Math.min(3,Math.max(.2,view.k*f)); f=k/view.k; v
 cv.addEventListener('wheel',e=>{e.preventDefault(); zoomAt(e.clientX,e.clientY,Math.exp(-e.deltaY*.0015))},{passive:false});
 
 /* ---------- 资料面板 ---------- */
-const F = ['name','gender','birth','death','place','note'];
+const F = ['name','cname','gender','birth','death','place','note'];
 function opts(el,skip,val,label){
   el.innerHTML='<option value="">'+label+'</option>'+people.filter(p=>p.id!==skip).map(p=>'<option value="'+p.id+'">'+esc(p.name||'未命名')+'</option>').join('');
   el.value=val||'';
@@ -302,10 +357,10 @@ function opts(el,skip,val,label){
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function openPanel(id){
   sel=id; const p=byId(id); if(!p) return;
-  F.forEach(f=>$(f).value=p[f]||'');
+  F.forEach(f=>$(f).value=p[f]||''); fillExtra(p);
   $('alive').checked = p.alive!==false; $('deathBox').style.display = $('alive').checked?'none':'block';
   opts($('father'),id,(p.parents||[])[0],'未填'); opts($('mother'),id,(p.parents||[])[1],'未填'); opts($('spouse'),id,p.spouse,'未填');
-  $('ph').style.backgroundImage = p.photo?'url('+p.photo+')':''; $('ph').textContent = p.photo?'':'上传照片';
+  
   document.querySelectorAll('#panel input,#panel select,#panel textarea,#del,.rels button').forEach(el=>el.disabled=READONLY);
   $('panel').classList.add('open');
 }
@@ -320,11 +375,33 @@ $('spouse').onchange=()=>{ const p=byId(sel);
   const s=byId(p.spouse); if(s){ const o=byId(s.spouse); if(o&&o!==p) o.spouse=''; s.spouse=p.id; } save(); };
 $('ph').onclick=()=>!READONLY&&$('phf').click();
 $('phf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
-  rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const s=Math.min(im.width,im.height), c=document.createElement('canvas'); c.width=c.height=200;
-    c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,200,200);
-    const p=byId(sel); p.photo=c.toDataURL('image/jpeg',.82); $('ph').style.backgroundImage='url('+p.photo+')'; $('ph').textContent=''; save(); };
+  rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const q=Math.min(1,420/Math.max(im.width,im.height)), c=document.createElement('canvas');
+    c.width=Math.round(im.width*q); c.height=Math.round(im.height*q); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const p=byId(sel); p.photo=c.toDataURL('image/jpeg',.85); p.pr=0; p.pz=1; p.px=0; p.py=0; save(); showPh(p); };
     im.src=rd.result; }; rd.readAsDataURL(f); e.target.value=''; };
-$('del').onclick=()=>{ const p=byId(sel); if(!p||!confirm('确定删除「'+(p.name||'未命名')+'」？')) return;
+const DEF={pr:0,pz:1,px:0,py:0};
+function showPh(p){
+  const im=$('phImg'); im.style.display=p.photo?'block':'none'; $('phTxt').style.display=p.photo?'none':'';
+  if(p.photo){ im.src=p.photo; im.style.transform='translate('+(p.px||0)/2+'%,'+(p.py||0)/2+'%) rotate('+(p.pr||0)+'deg) scale('+(p.pz||1)+')'; }
+  $('phAdj').hidden=!p.photo||READONLY; Object.keys(DEF).forEach(k=>$(k).value=p[k]==null?DEF[k]:p[k]);
+}
+Object.keys(DEF).forEach(k=>$(k).addEventListener('input',()=>{ const p=byId(sel); if(!p) return; p[k]=+$(k).value; save(); showPh(p); }));
+$('prR').onclick=()=>{ const p=byId(sel); Object.assign(p,DEF); save(); showPh(p); };
+const SOC=[['whatsapp','WhatsApp'],['wechat','WeChat'],['facebook','Facebook'],['instagram','Instagram'],['telegram','Telegram'],['tiktok','TikTok'],['xhs','小红书'],['link','其他链接']];
+$('socIn').innerHTML=SOC.map(([k,n])=>'<label for="s_'+k+'">'+n+'</label><input type="text" id="s_'+k+'">').join('');
+const noAt=v=>v.replace(/^@/,'');
+const URLS={whatsapp:v=>'https://wa.me/'+v.replace(/\D/g,''),facebook:v=>'https://facebook.com/'+noAt(v),instagram:v=>'https://instagram.com/'+noAt(v),telegram:v=>'https://t.me/'+noAt(v),tiktok:v=>'https://tiktok.com/@'+noAt(v)};
+function renderSoc(p){ const box=$('socView'); box.textContent=''; const so=p.social||{};
+  SOC.forEach(([k,n])=>{ const v=(so[k]||'').trim(); if(!v) return;
+    const href=/^https?:\/\//i.test(v)?v:(URLS[k]?URLS[k](v):''), ok=/^https?:\/\//i.test(href);
+    const el=document.createElement(ok?'a':'span');
+    if(ok){ el.href=href; el.target='_blank'; el.rel='noopener noreferrer'; el.textContent=n; } else el.textContent=n+'：'+v;
+    box.appendChild(el); });
+}
+SOC.forEach(([k])=>$('s_'+k).addEventListener('input',()=>{ const p=byId(sel); if(!p) return; (p.social=p.social||{})[k]=$('s_'+k).value.trim(); save(); renderSoc(p); }));
+function fillExtra(p){ showPh(p); SOC.forEach(([k])=>$('s_'+k).value=(p.social||{})[k]||''); renderSoc(p); }
+if(READONLY) $('socWrap').style.display='none';
+$('del').onclick=()=>{ const p=byId(sel); if(!p||!confirm(L('确定删除「'+names(p)[0]+'」？','Delete “'+names(p)[0]+'”?'))) return;
   people=people.filter(q=>q!==p); people.forEach(q=>{ q.parents=(q.parents||[]).filter(i=>i!==p.id); if(q.spouse===p.id) q.spouse=''; });
   closePanel(); save(); toggleEmpty(); };
 
@@ -369,7 +446,7 @@ $('jf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new Fil
 function buildReq(withPhoto){
   const name=$('jn').value.trim(); if(!name){ alert('请填写你的姓名'); return null; }
   const t=byId($('jt').value); if(!t){ alert('请选择你是哪位成员的亲人'); return null; }
-  const person={name,gender:$('jg').value,birth:$('jb').value.trim(),alive:$('ja').checked,note:$('jo').value.trim()};
+  const person={name,cname:$('jc').value.trim(),gender:$('jg').value,birth:$('jb').value.trim(),alive:$('ja').checked,note:$('jo').value.trim()};
   if(withPhoto&&reqPhoto) person.photo=reqPhoto;
   return {type:'join-request',v:1,person,rel:$('jr').value,to:t.id,toName:t.name};
 }
@@ -381,7 +458,7 @@ $('jgh').onclick=()=>{ const r=buildReq(false); if(!r) return;
 function readReq(txt){
   try{ const r=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]); if(r.type!=='join-request'||!r.person) throw 0;
     pending=r; const t=byId(r.to);
-    $('rv').textContent=(r.person.name||'?')+' 想作为「'+(t?t.name:(r.toName||'?')+'（已找不到）')+'」的'+(RL[r.rel]||'子女')+'加入。'; $('rvok').hidden=!t; }
+    $('rv').textContent=L((r.person.name||'?')+' 想作为「'+(t?t.name:(r.toName||'?')+'（已找不到）')+'」的'+(RL[r.rel]||'子女')+'加入。',(r.person.name||'?')+' wants to join as the '+(r.rel||'child')+' of “'+(t?t.name:(r.toName||'?')+' (not found)')+'”.'); $('rvok').hidden=!t; }
   catch(_){ pending=null; $('rvok').hidden=true; $('rv').textContent='读取失败：请粘贴完整的申请内容（以 { 开头），或选择申请文件。'; }
 }
 $('rd').onclick=()=>readReq($('rt').value);
@@ -391,13 +468,13 @@ $('rvok').onclick=()=>{
   const r=pending; if(!r||!byId(r.to)) return alert('找不到对应成员。');
   sel=r.to; addRel(RL[r.rel]?r.rel:'child'); if(sel===r.to) return;
   const o=r.person, p=byId(sel), S=(v,n)=>String(v==null?'':v).slice(0,n);
-  Object.assign(p,{name:S(o.name,60)||'新成员',gender:['m','f'].includes(o.gender)?o.gender:'',birth:S(o.birth,20),alive:o.alive!==false,note:S(o.note,500)});
+  Object.assign(p,{name:S(o.name,60)||'新成员',cname:S(o.cname,40),gender:['m','f'].includes(o.gender)?o.gender:'',birth:S(o.birth,20),alive:o.alive!==false,note:S(o.note,500)});
   if(typeof o.photo==='string'&&/^data:image\/(jpeg|png);base64,/.test(o.photo)&&o.photo.length<400000) p.photo=o.photo;
   save(); openPanel(p.id); closeModal(); pending=null;
 };
 
 /* ---------- 工具栏 ---------- */
-const syncB=()=>{ $('tgPh').textContent=showPhoto?'显示：照片':'显示：星星'; $('tgAuto').textContent=auto?'自动旋转：开':'自动旋转：关'; };
+const syncB=()=>{ $('tgPh').textContent=showPhoto?'显示：照片':'显示：星星'; $('tgAuto').textContent=auto?'自动旋转：开':'自动旋转：关'; $('tg2d').textContent=M2?'视图：2D':'视图：3D'; $('tgAuto').style.display=M2?'none':''; };
 $('tgPh').onclick=()=>{ showPhoto=!showPhoto; try{localStorage.setItem(KEY+'-ph',showPhoto?'1':'0')}catch(e){} syncB(); };
 $('tgAuto').onclick=()=>{ auto=!auto; syncB(); };
 $('rst').onclick=()=>{ cam={yaw:.4,pitch:.3}; fit(); };
@@ -407,14 +484,35 @@ $('add').onclick=()=>{ const c={x:ctr.x+(Math.random()-.5)*120,y:ctr.y+(Math.ran
   const p=newP({},c); save(); toggleEmpty(); openPanel(p.id); $('name').select(); };
 $('lay').onclick=()=>{ layout(); fit(); };
 $('exp').onclick=()=>{ const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(people,null,1)],{type:'application/json'})); a.download='data.json'; a.click(); };
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(people,SER,1)],{type:'application/json'})); a.download='data.json'; a.click(); };
 $('imp').onclick=()=>$('impf').click();
 $('impf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
-  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!Array.isArray(d)) throw 0; if(people.length&&confirm('合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部')){ const m=new Map(people.map(p=>[p.id,p])); let nn=0,uu=0; d.forEach(p=>{ m.has(p.id)?uu++:nn++; m.set(p.id,p); }); people=[...m.values()]; setTimeout(()=>alert('合并完成：新增 '+nn+' 位，更新 '+uu+' 位。'),50); } else people=d; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); }
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!Array.isArray(d)) throw 0; if(people.length&&confirm('合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部')){ const m=new Map(people.map(p=>[p.id,p])); let nn=0,uu=0; d.forEach(p=>{ m.has(p.id)?uu++:nn++; m.set(p.id,p); }); people=[...m.values()]; setTimeout(()=>alert(L('合并完成：新增 '+nn+' 位，更新 '+uu+' 位。','Merged: '+nn+' added, '+uu+' updated.')),50); } else people=d; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); }
     catch(_){ alert('文件格式不正确，请选择由本站导出的 JSON 文件。'); } }; rd.readAsText(f); e.target.value=''; };
 addEventListener('resize',resize);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
 
+
+/* ---------- 语言 / 2D ---------- */
+const ORI=new WeakMap();
+function trNode(n){
+  if(n.parentNode&&/^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)) return;
+  const v=n.nodeValue; if(!v.trim()) return;
+  let o=ORI.get(n); if(!o||v!==o.cur){ o={zh:v,cur:v}; ORI.set(n,o); }
+  const z=o.zh.trim(), out=lang==='en'&&DICT[z]?o.zh.replace(z,DICT[z]):o.zh;
+  if(out!==o.cur){ o.cur=out; n.nodeValue=out; }
+}
+function walk(n){ const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT); let x; while(x=w.nextNode()) trNode(x); }
+function applyLang(){
+  document.documentElement.lang=lang==='en'?'en':'zh-CN'; document.title=L('星谱 · 家族星图','Star Map · Family Cosmos');
+  $('ph').title=L('点击上传照片','Click to upload photo'); walk(document.body); syncB(); setHint();
+}
+new MutationObserver(ms=>ms.forEach(m=>{ if(m.type==='characterData') trNode(m.target); else m.addedNodes.forEach(n=>n.nodeType===3?trNode(n):n.nodeType===1&&walk(n)); }))
+  .observe(document.body,{childList:true,subtree:true,characterData:true});
+const setHint=()=>{ $('hint').textContent=M2?'拖动平移 · 滚轮缩放':'拖动旋转 · Shift/右键拖动平移 · 滚轮缩放'; };
+$('lang').value=lang; $('lang').onchange=()=>{ lang=$('lang').value; try{localStorage.setItem('xingpu-lang',lang)}catch(e){} applyLang(); };
+$('tg2d').onclick=()=>{ M2=!M2; try{localStorage.setItem(KEY+'-2d',M2?'1':'0')}catch(e){} fit(); syncB(); setHint(); };
+applyLang();
 resize(); view={x:innerWidth/2,y:innerHeight/2,k:1}; load(); requestAnimationFrame(frame);
 </script>
 </body>
