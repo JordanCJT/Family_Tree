@@ -56,13 +56,15 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
   <button class="btn" id="tgPh"></button>
   <button class="btn" id="tgAuto"></button>
   <button class="btn" id="rst">重置视角</button>
-  <button class="btn" id="inv">邀请亲人</button>
+  <button class="btn" id="inv">复制查看链接</button>
+  <button class="btn" id="invE">复制编辑链接</button>
+  <button class="btn" id="reload">载入线上版本</button>
   <button class="btn" id="joinBtn">申请加入</button>
   <button class="btn" id="rev">审核申请</button>
   <input type="file" id="impf" accept=".json" hidden>
 </header>
 <div id="empty">星空还是空的<br>点「添加成员」点亮第一颗星</div>
-<div id="legend"><span><i style="background:var(--gold)"></i>在世</span><span><i style="background:var(--ice)"></i>已故</span><span>拖动旋转 · Shift/右键拖动平移 · 滚轮缩放</span></div>
+<div id="legend"><span><i style="background:var(--gold)"></i>在世</span><span><i style="background:var(--ice)"></i>已故</span><span>拖动旋转 · Shift/右键拖动平移 · 滚轮缩放</span><span id="modeTxt"></span></div>
 
 <aside id="panel" aria-label="成员资料">
   <button id="close" aria-label="关闭">×</button>
@@ -112,7 +114,8 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 </div></div>
 
 <script>
-const READONLY = false; // 设为 true：公开站点只读，访客不能编辑
+const EDIT = location.protocol==='file:' || new URLSearchParams(location.search).has('edit'); // 默认只读查看；网址后加 ?edit=1 进入编辑模式
+const READONLY = !EDIT;
 const REPO = ''; // 填你的 GitHub 仓库，如 'yourname/family-stars'，访客才能一键提交加入申请
 const KEY = 'xingpu-family-v1';
 const $ = id => document.getElementById(id);
@@ -129,14 +132,20 @@ const sample = () => [
   {id:'c1',name:'我',gender:'',birth:'1992-02-14',alive:true,parents:['b1','b2']}
 ];
 function save(){ if(READONLY) return; try{localStorage.setItem(KEY,JSON.stringify(people))}catch(e){} }
+let draft=false;
+const fetchLive=()=>fetch('data.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>Array.isArray(d)?d:Promise.reject());
 function load(){
-  let s = null; try{s = JSON.parse(localStorage.getItem(KEY))}catch(e){}
-  if(s && s.length){ people = s; start(); return; }
-  fetch('data.json').then(r=>r.ok?r.json():Promise.reject()).then(d=>{people=d}).catch(()=>{people=sample()}).finally(()=>{layout();start()});
+  let d=null; if(!READONLY){ try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){} }
+  if(d&&d.length){ people=d; draft=true; start(); return; }
+  fetchLive().then(x=>{people=x}).catch(()=>{people=READONLY?[]:sample()}).finally(start);
 }
-function start(){ if(people.some(p=>p.x==null||p.z==null)) layout(); resize(); fit(); toggleEmpty(); }
+function start(){
+  if(people.some(p=>p.x==null||p.z==null)) layout();
+  $('modeTxt').textContent=READONLY?'实时家族星图 · 显示站长发布的最新资料':(draft?'编辑模式（本机草稿）':'编辑模式')+'：修改只保存在这台设备，完成后点「导出数据」发给站长';
+  resize(); fit(); toggleEmpty();
+}
 const byId = id => people.find(p=>p.id===id);
-const toggleEmpty = () => $('empty').style.display = people.length ? 'none':'grid';
+const toggleEmpty = () => { $('empty').style.display = people.length ? 'none':'grid'; $('empty').innerHTML = READONLY ? '还没有发布家族资料<br>请稍后再来看看' : '星空还是空的<br>点「添加成员」点亮第一颗星'; };
 const year = s => (s||'').slice(0,4);
 
 /* ---------- 布局：按辈分分行，配偶相邻 ---------- */
@@ -346,7 +355,14 @@ addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 $('joinBtn').onclick=()=>openModal('join'); $('rev').onclick=()=>openModal('review');
 if(READONLY) $('rev').style.display='none';
 const copyText=(t,ok,ask)=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(ok).catch(()=>prompt(ask,t));
-$('inv').onclick=()=>copyText(location.href.split('#')[0],()=>{ $('inv').textContent='链接已复制 ✓'; setTimeout(()=>$('inv').textContent='邀请亲人',1800); },'复制这个链接发给亲人：');
+const base=location.href.split('#')[0].split('?')[0];
+const flash=(b,t)=>{ b.textContent='链接已复制 ✓'; setTimeout(()=>b.textContent=t,1800); };
+$('inv').onclick=()=>copyText(base,()=>flash($('inv'),'复制查看链接'),'复制这个查看链接发给亲人：');
+$('invE').onclick=()=>copyText(base+'?edit=1',()=>flash($('invE'),'复制编辑链接'),'复制这个编辑链接发给要补充资料的亲人：');
+$('reload').onclick=()=>{ if(!confirm('放弃本机草稿，改用线上最新版本？')) return;
+  fetchLive().then(d=>{ people=d; draft=false; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); start(); })
+  .catch(()=>alert('读不到线上的 data.json。请在已发布的网站上使用此功能（本地直接打开文件时无法读取）。')); };
+if(READONLY) ['invE','reload'].forEach(i=>$(i).style.display='none');
 $('jf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
   rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const q=Math.min(im.width,im.height), c=document.createElement('canvas'); c.width=c.height=200;
     c.getContext('2d').drawImage(im,(im.width-q)/2,(im.height-q)/2,q,q,0,0,200,200); reqPhoto=c.toDataURL('image/jpeg',.82); }; im.src=rd.result; }; rd.readAsDataURL(f); };
@@ -394,7 +410,7 @@ $('exp').onclick=()=>{ const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(people,null,1)],{type:'application/json'})); a.download='data.json'; a.click(); };
 $('imp').onclick=()=>$('impf').click();
 $('impf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
-  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!Array.isArray(d)) throw 0; if(people.length&&confirm('合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部')){ const m=new Map(people.map(p=>[p.id,p])); d.forEach(p=>m.set(p.id,p)); people=[...m.values()]; } else people=d; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); }
+  rd.onload=()=>{ try{ const d=JSON.parse(rd.result); if(!Array.isArray(d)) throw 0; if(people.length&&confirm('合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部')){ const m=new Map(people.map(p=>[p.id,p])); let nn=0,uu=0; d.forEach(p=>{ m.has(p.id)?uu++:nn++; m.set(p.id,p); }); people=[...m.values()]; setTimeout(()=>alert('合并完成：新增 '+nn+' 位，更新 '+uu+' 位。'),50); } else people=d; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); }
     catch(_){ alert('文件格式不正确，请选择由本站导出的 JSON 文件。'); } }; rd.readAsText(f); e.target.value=''; };
 addEventListener('resize',resize);
 addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
