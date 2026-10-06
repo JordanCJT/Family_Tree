@@ -49,7 +49,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 #rv{white-space:pre-line}.jcard{border:1px solid var(--line);border-radius:12px;padding:2px 12px 12px;margin:12px 0}
 .jcard h3{margin:10px 0 0;font-size:14px;color:var(--gold);font-weight:600}.jcard summary{cursor:pointer;margin-top:12px;color:var(--dim);font-size:13px}
 #vg{display:flex;gap:6px;align-items:center;padding-left:10px;margin-left:2px;border-left:1px solid var(--line)}
-#rt{display:flex;gap:8px;align-items:center;margin-left:auto}
+#rtg{display:flex;gap:8px;align-items:center;margin-left:auto}
 .pk{position:relative;flex:1}.pk ul{position:absolute;left:0;right:0;top:100%;z-index:20;margin:2px 0 0;padding:4px;list-style:none;background:#0e1226;border:1px solid var(--line);border-radius:8px;max-height:180px;overflow:auto;display:none}
 .pk.open ul{display:block}.pk li{padding:7px 9px;border-radius:6px;cursor:pointer;font-size:14px}.pk li:hover{background:#1b2150}
 #rres{white-space:pre-line;font-size:15px;line-height:1.8;margin-top:12px;color:var(--ink)}
@@ -68,7 +68,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
   <button class="btn main" id="add">＋ 添加成员</button>
   <button class="btn main" id="joinBtn">申请加入</button>
   <div id="vg"></div>
-  <div id="rt"><button class="btn" id="mm" aria-label="菜单" aria-expanded="false"><span class="mt">更多 </span>☰</button></div>
+  <div id="rtg"><button class="btn" id="mm" aria-label="菜单" aria-expanded="false"><span class="mt">更多 </span>☰</button></div>
   <div id="menu">
     <button class="btn" id="relBtn">关系查询</button>
     <button class="btn" id="tg2d"></button>
@@ -156,7 +156,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 const EDIT = location.protocol==='file:' || new URLSearchParams(location.search).has('edit'); // 默认只读查看；网址后加 ?edit=1 进入编辑模式
 const READONLY = !EDIT;
 const REPO = ''; // 填你的 GitHub 仓库，如 'yourname/family-stars'，访客才能一键提交加入申请
-const AUTHOR = '张家腾 Chong Jia Teng'; // 作者名，显示在「关于」里
+const AUTHOR = '（请改成你的名字）'; // 作者名，显示在「关于」里
 const VERSION = '1.5';
 const OWNER_WA = '60178661928'; // 站长 WhatsApp：国家码+号码，不带 + 和空格（+60 17-866 1928）
 const KEY = 'xingpu-family-v1';
@@ -694,7 +694,7 @@ if(!READONLY) $('menu').prepend($('joinBtn'));
 $('tgLine').onclick=()=>{ straight=!straight; try{localStorage.setItem(KEY+'-ln',straight?'1':'0')}catch(e){} syncB(); };
 $('aboutBtn').onclick=()=>openModal('about');
 const mq=matchMedia('(min-width:761px)');
-function place(){ const d=mq.matches, vg=$('vg'), rt=$('rt'), mn=$('menu');
+function place(){ const d=mq.matches, vg=$('vg'), rt=$('rtg'), mn=$('menu');
   if(d){ vg.append($('relBtn'),$('tg2d'),$('tgPh'),$('tgLine')); rt.prepend($('lang')); }
   else { rt.prepend($('tg2d')); mn.prepend($('relBtn'),$('tgPh'),$('tgLine')); mn.append($('lang')); } }
 mq.addEventListener('change',place); place();
