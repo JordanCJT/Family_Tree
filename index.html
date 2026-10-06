@@ -44,7 +44,13 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 #ph{position:relative;overflow:hidden}#phImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #panel input[type=range]{width:100%}.soc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .soc a,.soc span{font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--ice);text-decoration:none;background:#141935}.soc a:hover{border-color:var(--gold)}
-@media(max-width:600px){#panel{top:auto;height:72%;width:100%;border-left:0;border-top:1px solid var(--line);transform:translateY(100%)}h1{width:100%;margin:0}}
+#menu{display:none;position:fixed;right:12px;top:calc(58px + env(safe-area-inset-top,0px));width:min(260px,calc(100vw - 24px));max-height:calc(100% - 90px);overflow:auto;flex-direction:column;gap:6px;padding:10px;background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;z-index:6}
+#menu.open{display:flex}#menu .btn,#menu select{width:100%;min-height:42px;text-align:left;border-radius:10px}
+#rv{white-space:pre-line}.jcard{border:1px solid var(--line);border-radius:12px;padding:2px 12px 12px;margin:12px 0}
+.jcard h3{margin:10px 0 0;font-size:14px;color:var(--gold);font-weight:600}.jcard summary{cursor:pointer;margin-top:12px;color:var(--dim);font-size:13px}
+@media(min-width:761px){#menu,#menu.open{display:contents}#mm{display:none}#menu .btn,#menu select{width:auto;min-height:0;text-align:center;border-radius:999px}}
+@media(max-width:760px){#hint{display:none}#legend{font-size:11px;gap:10px}.btn{min-height:40px}header{gap:8px}}
+@media(max-width:600px){#panel{top:auto;height:72%;width:100%;border-left:0;border-top:1px solid var(--line);transform:translateY(100%)}h1{font-size:18px;letter-spacing:.2em;margin:0 auto 0 0}}
 @media(prefers-reduced-motion:reduce){#panel{transition:none}}
 </style>
 </head>
@@ -53,19 +59,22 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 <header>
   <h1>星谱</h1>
   <button class="btn main" id="add">＋ 添加成员</button>
-  <button class="btn" id="lay">整理星图</button>
-  <button class="btn" id="exp">导出数据</button>
-  <button class="btn" id="imp">导入数据</button>
-  <button class="btn" id="tgPh"></button>
-  <button class="btn" id="tgAuto"></button>
+  <button class="btn main" id="joinBtn">申请加入</button>
   <button class="btn" id="tg2d"></button>
-  <button class="btn" id="rst">重置视角</button>
-  <button class="btn" id="inv">复制查看链接</button>
-  <button class="btn" id="invE">复制编辑链接</button>
-  <button class="btn" id="reload">载入线上版本</button>
-  <button class="btn" id="joinBtn">申请加入</button>
-  <button class="btn" id="rev">审核申请</button>
-  <select id="lang" class="btn" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select>
+  <button class="btn" id="mm" aria-label="菜单" aria-expanded="false">☰</button>
+  <div id="menu">
+    <button class="btn" id="lay">整理星图</button>
+    <button class="btn" id="tgPh"></button>
+    <button class="btn" id="tgAuto"></button>
+    <button class="btn" id="rst">重置视角</button>
+    <button class="btn" id="inv">复制查看链接</button>
+    <button class="btn" id="invE">复制编辑链接</button>
+    <button class="btn" id="exp">导出数据</button>
+    <button class="btn" id="imp">导入数据</button>
+    <button class="btn" id="reload">载入线上版本</button>
+    <button class="btn" id="rev">审核申请</button>
+    <select id="lang" class="btn" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select>
+  </div>
   <input type="file" id="impf" accept=".json" hidden>
 </header>
 <div id="empty">星空还是空的<br>点「添加成员」点亮第一颗星</div>
@@ -106,18 +115,12 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 <button id="mx" aria-label="关闭" style="position:absolute;right:10px;top:6px;background:none;border:0;font-size:26px;color:var(--dim);cursor:pointer">×</button>
 <div id="joinBox">
 <h2>申请加入家族星图</h2>
-<p>填写你的资料，选择你是星图里哪位成员的亲人，把申请发给站长。审核通过后，你会成为星图里的一颗新星。</p>
-<label for="jn">你的姓名</label><input type="text" id="jn">
-<label for="jc">华语名字（中文名，可选）</label><input type="text" id="jc">
-<div class="row"><div><label for="jg">性别</label><select id="jg"><option value="">未填</option><option value="m">男</option><option value="f">女</option></select></div>
-<div><label for="jb">生日 / 出生年份</label><input type="text" id="jb" placeholder="1990"></div></div>
-<label class="chk"><input type="checkbox" id="ja" checked> 仍在世</label>
-<label for="jt">我是（成员）的（关系）</label>
-<div class="row"><select id="jt"></select><select id="jr"><option value="child">子女</option><option value="spouse">配偶</option><option value="parent">父母</option><option value="sibling">兄弟姐妹</option></select></div>
-<label for="jf">照片（可选）</label><input type="file" id="jf" accept="image/*">
-<label for="jo">想说的话（可选）</label><textarea id="jo"></textarea>
-<div class="acts"><button class="btn main" id="jgh">提交到 GitHub</button><button class="btn" id="jcp">复制申请内容</button><button class="btn" id="jdl">下载申请文件</button></div>
-<p>照片只会放进「下载申请文件」；复制内容和 GitHub 提交只含文字。</p>
+<p>先简单介绍你是谁，再填写要加入的人（可以一次加入你的家人）。完成后用 WhatsApp 发给站长，审核通过后就会出现在星图里。</p>
+<label for="jw">你是谁？（让站长认得你）</label><input type="text" id="jw">
+<div id="jcards"></div>
+<button class="btn" id="jadd">＋ 同时添加我的家人</button>
+<div class="acts"><button class="btn main" id="jwa">发送给站长（WhatsApp）</button><button class="btn" id="jcp">复制申请内容</button><button class="btn" id="jdl">下载申请文件（含照片）</button><button class="btn" id="jgh">提交到 GitHub</button></div>
+<p>照片只会放进「下载申请文件」；WhatsApp、复制内容和 GitHub 提交只含文字。</p>
 </div>
 <div id="reviewBox" hidden>
 <h2>审核加入申请</h2>
@@ -132,6 +135,7 @@ padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area
 const EDIT = location.protocol==='file:' || new URLSearchParams(location.search).has('edit'); // 默认只读查看；网址后加 ?edit=1 进入编辑模式
 const READONLY = !EDIT;
 const REPO = ''; // 填你的 GitHub 仓库，如 'yourname/family-stars'，访客才能一键提交加入申请
+const OWNER_WA = '60178661928'; // 站长 WhatsApp：国家码+号码，不带 + 和空格（+60 17-866 1928）
 const KEY = 'xingpu-family-v1';
 const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
@@ -164,6 +168,13 @@ const DICT={'星谱':'Star Map','添加成员':'Add member','整理星图':'Auto
 '放弃本机草稿，改用线上最新版本？':'Discard the local draft and use the latest online version?','读不到线上的 data.json。请在已发布的网站上使用此功能（本地直接打开文件时无法读取）。':'Could not read the online data.json. Use this on the published site (it cannot be read when opening the file locally).',
 '文件格式不正确，请选择由本站导出的 JSON 文件。':'Invalid file. Please choose a JSON file exported from this site.',
 '合并到现有资料？\n确定=合并（相同成员以新文件为准）；取消=用新文件替换全部':'Merge into existing data?\nOK = merge (same members use the new file); Cancel = replace everything with the new file'};
+Object.assign(DICT,{'＋ 添加成员':'+ Add member','你是谁？（让站长认得你）':'Who are you? (so the site owner recognises you)',
+'先简单介绍你是谁，再填写要加入的人（可以一次加入你的家人）。完成后用 WhatsApp 发给站长，审核通过后就会出现在星图里。':'Tell us who you are, then fill in the people to add (you can add your family members at once). Send it to the site owner via WhatsApp; once approved they will appear on the map.',
+'＋ 同时添加我的家人':'+ Also add my family members','发送给站长（WhatsApp）':'Send to the site owner (WhatsApp)','下载申请文件（含照片）':'Download request file (with photos)',
+'这位是（成员）的（关系）':'This person is the (relation) of (member)','社交链接（可选）':'Social links (optional)','备注（可选）':'Notes (optional)','移除这位':'Remove this person',
+'请填写“你是谁”，让站长认得你':'Please tell the site owner who you are','请填写每位成员的姓名':'Please enter a name for every person','请为每位成员选择关系对象':'Please choose who each person is related to',
+'内容较长，已复制到剪贴板，请在 WhatsApp 对话里粘贴发送。':'The message is long and has been copied. Please paste it into the WhatsApp chat.',
+'照片只会放进「下载申请文件」；WhatsApp、复制内容和 GitHub 提交只含文字。':'Photos are only included in the downloaded file; WhatsApp, copied text and GitHub submissions contain text only.'});
 const L=(zh,en)=>lang==='en'?en:zh, T=m=>lang==='en'&&DICT[m]||m;
 const _al=alert,_cf=confirm,_pr=prompt; window.alert=m=>_al(T(m)); window.confirm=m=>_cf(T(m)); window.prompt=(m,v)=>_pr(T(m),v);
 const names=p=>{ const a=(p.name||'').trim(), b=(p.cname||'').trim(); if(!a&&!b) return [L('未命名','Unnamed'),''];
@@ -234,7 +245,7 @@ function fit(){
 /* ---------- 绘制（3D） ---------- */
 let bg=[], cam={yaw:.4,pitch:.3}, auto=false, showPhoto=true, ctr={x:0,y:0,z:0}, D=1100;
 try{ showPhoto=localStorage.getItem(KEY+'-ph')!=='0' }catch(e){}
-let M2=START_2D; try{ const v=localStorage.getItem(KEY+'-2d'); if(v!=null) M2=v==='1' }catch(e){}
+let M2=START_2D||matchMedia('(max-width:760px)').matches; try{ const v=localStorage.getItem(KEY+'-2d'); if(v!=null) M2=v==='1' }catch(e){}
 function resize(){
   DPR=window.devicePixelRatio||1; W=innerWidth; H=innerHeight;
   cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -362,7 +373,7 @@ function openPanel(id){
   opts($('father'),id,(p.parents||[])[0],'未填'); opts($('mother'),id,(p.parents||[])[1],'未填'); opts($('spouse'),id,p.spouse,'未填');
   
   document.querySelectorAll('#panel input,#panel select,#panel textarea,#del,.rels button').forEach(el=>el.disabled=READONLY);
-  $('panel').classList.add('open');
+  $('panel').classList.add('open'); if(innerWidth<=600&&p._s){ view.x+=innerWidth/2-p._s.sx; view.y+=innerHeight*.2-p._s.sy; }
 }
 function closePanel(){ sel=null; $('panel').classList.remove('open'); }
 $('close').onclick=closePanel;
@@ -424,7 +435,7 @@ const RL={child:'子女',spouse:'配偶',parent:'父母',sibling:'兄弟姐妹'}
 let reqPhoto='', pending=null;
 const modal=$('modal');
 function openModal(m){ modal.hidden=false; $('joinBox').hidden=m!=='join'; $('reviewBox').hidden=m!=='review';
-  if(m==='join'){ opts($('jt'),'','','请选择成员'); $('jgh').hidden=!REPO; } else { $('rv').textContent=''; $('rvok').hidden=true; } }
+  if(m==='join') initJoin(); else { $('rv').textContent=''; $('rvok').hidden=true; } }
 function closeModal(){ modal.hidden=true; }
 $('mx').onclick=closeModal;
 modal.addEventListener('pointerdown',e=>{ if(e.target===modal) closeModal(); });
@@ -440,37 +451,89 @@ $('reload').onclick=()=>{ if(!confirm('放弃本机草稿，改用线上最新�
   fetchLive().then(d=>{ people=d; draft=false; closePanel(); if(people.some(p=>p.x==null||p.z==null)) layout(); save(); fit(); toggleEmpty(); start(); })
   .catch(()=>alert('读不到线上的 data.json。请在已发布的网站上使用此功能（本地直接打开文件时无法读取）。')); };
 if(READONLY) ['invE','reload'].forEach(i=>$(i).style.display='none');
-$('jf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
-  rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const q=Math.min(im.width,im.height), c=document.createElement('canvas'); c.width=c.height=200;
-    c.getContext('2d').drawImage(im,(im.width-q)/2,(im.height-q)/2,q,q,0,0,200,200); reqPhoto=c.toDataURL('image/jpeg',.82); }; im.src=rd.result; }; rd.readAsDataURL(f); };
-function buildReq(withPhoto){
-  const name=$('jn').value.trim(); if(!name){ alert('请填写你的姓名'); return null; }
-  const t=byId($('jt').value); if(!t){ alert('请选择你是哪位成员的亲人'); return null; }
-  const person={name,cname:$('jc').value.trim(),gender:$('jg').value,birth:$('jb').value.trim(),alive:$('ja').checked,note:$('jo').value.trim()};
-  if(withPhoto&&reqPhoto) person.photo=reqPhoto;
-  return {type:'join-request',v:1,person,rel:$('jr').value,to:t.id,toName:t.name};
+let jn=0;
+function shrink(f,cb){ if(!f) return cb(''); const rd=new FileReader();
+  rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const q=Math.min(1,360/Math.max(im.width,im.height)), c=document.createElement('canvas');
+    c.width=Math.round(im.width*q); c.height=Math.round(im.height*q); c.getContext('2d').drawImage(im,0,0,c.width,c.height); cb(c.toDataURL('image/jpeg',.82)); }; im.src=rd.result; }; rd.readAsDataURL(f); }
+function initJoin(){ $('jcards').textContent=''; jn=0; $('jw').value=''; $('jw').placeholder=L('例如：我是王五的堂弟，住在槟城','e.g. I am Wang Wu’s cousin, living in Penang'); addCard(); $('jgh').hidden=!REPO; }
+function refreshTargets(){
+  const cs=[...$('jcards').children];
+  cs.forEach((c,i)=>{
+    c.querySelector('.jt').textContent=i?L('家人 '+i,'Family member '+i):L('你本人','You');
+    const sl=c.querySelector('.c-to'), cur=sl.value;
+    sl.innerHTML='<option value="">'+L('请选择成员','Select a member')+'</option>'+people.map(p=>'<option value="'+p.id+'">'+esc(names(p)[0])+'</option>').join('')
+      +cs.filter(x=>x!==c).map(x=>'<option value="'+x.dataset.k+'">'+esc(L('（本次申请）','(this request) ')+(x.querySelector('.c-name').value.trim()||L('未命名','Unnamed')))+'</option>').join('');
+    sl.value=[...sl.options].some(o=>o.value===cur)?cur:(i?cs[0].dataset.k:'');
+  });
 }
-$('jcp').onclick=()=>{ const r=buildReq(false); if(r) copyText(JSON.stringify(r),()=>alert('已复制，请发给站长（WhatsApp、微信或邮件都可以）。'),'复制申请内容：'); };
+function addCard(){
+  const d=document.createElement('div'); d.className='jcard'; d.dataset.k='#'+(++jn); d._ph='';
+  d.innerHTML='<h3 class="jt"></h3><label>姓名<input type="text" class="c-name"></label><label>华语名字（中文名，可选）<input type="text" class="c-cname"></label>'
+   +'<div class="row"><label>性别<select class="c-g"><option value="">未填</option><option value="m">男</option><option value="f">女</option></select></label><label>生日 / 出生年份<input type="text" class="c-b" placeholder="1990"></label></div>'
+   +'<label class="chk"><input type="checkbox" class="c-a" checked> 仍在世</label><label>这位是（成员）的（关系）</label>'
+   +'<div class="row"><select class="c-to"></select><select class="c-rel"><option value="child">子女</option><option value="spouse">配偶</option><option value="parent">父母</option><option value="sibling">兄弟姐妹</option></select></div>'
+   +'<details><summary>社交链接（可选）</summary>'+SOC.map(([k,n])=>'<label>'+n+'<input type="text" class="c-s-'+k+'"></label>').join('')+'</details>'
+   +'<label>照片（可选）<input type="file" accept="image/*" class="c-ph"></label><label>备注（可选）<textarea class="c-note"></textarea></label><button class="btn c-rm" type="button" style="margin-top:10px">移除这位</button>';
+  const first=!$('jcards').children.length; if(first) d.querySelector('.c-rm').hidden=true;
+  d.querySelector('.c-name').oninput=refreshTargets; d.querySelector('.c-rm').onclick=()=>{ d.remove(); refreshTargets(); };
+  d.querySelector('.c-ph').onchange=e=>shrink(e.target.files[0],u=>d._ph=u);
+  $('jcards').appendChild(d); refreshTargets();
+}
+$('jadd').onclick=addCard;
+function buildReq(withPhoto){
+  const who=$('jw').value.trim(); if(!who){ alert('请填写“你是谁”，让站长认得你'); return null; }
+  const list=[];
+  for(const c of $('jcards').children){
+    const q=k=>c.querySelector(k), name=q('.c-name').value.trim(), to=q('.c-to').value;
+    if(!name){ alert('请填写每位成员的姓名'); return null; } if(!to){ alert('请为每位成员选择关系对象'); return null; }
+    const social={}; SOC.forEach(([k])=>{ const v=q('.c-s-'+k).value.trim(); if(v) social[k]=v; }); const t=byId(to);
+    const o={k:c.dataset.k,name,cname:q('.c-cname').value.trim(),gender:q('.c-g').value,birth:q('.c-b').value.trim(),alive:q('.c-a').checked,note:q('.c-note').value.trim(),social,rel:q('.c-rel').value,to,toName:t?t.name:''};
+    if(withPhoto&&c._ph) o.photo=c._ph; list.push(o);
+  }
+  return {type:'join-request',v:2,from:who,people:list};
+}
+function summary(r){
+  const nm=o=>o.name+(o.cname?'（'+o.cname+'）':''), tn=o=>{ const x=r.people.find(q=>q.k===o.to); return x?nm(x):(o.toName||'?'); };
+  return L('【家族星图 加入申请】','[Family Star Map – join request]')+'\n'+L('我是：','I am: ')+r.from+'\n'
+    +r.people.map((o,i)=>(i+1)+'. '+nm(o)+' — '+L('是「'+tn(o)+'」的'+(RL[o.rel]||'子女'),'is the '+(o.rel||'child')+' of '+tn(o))).join('\n');
+}
+const msgText=r=>summary(r)+'\n\n'+L('（以下为系统数据，请勿修改）','(system data below – please do not edit)')+'\n'+JSON.stringify(r);
+$('jwa').onclick=()=>{ const r=buildReq(false); if(!r) return; const t=msgText(r), u='https://wa.me/'+OWNER_WA+'?text='+encodeURIComponent(t);
+  if(u.length>6000) copyText(t,()=>{ alert('内容较长，已复制到剪贴板，请在 WhatsApp 对话里粘贴发送。'); open('https://wa.me/'+OWNER_WA,'_blank'); },'复制申请内容：'); else open(u,'_blank'); };
+$('jcp').onclick=()=>{ const r=buildReq(false); if(r) copyText(msgText(r),()=>alert('已复制，请发给站长（WhatsApp、微信或邮件都可以）。'),'复制申请内容：'); };
 $('jdl').onclick=()=>{ const r=buildReq(true); if(!r) return; const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(r)],{type:'application/json'})); a.download='join-'+r.person.name+'.json'; a.click(); };
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(r)],{type:'application/json'})); a.download='join-'+r.people[0].name+'.json'; a.click(); };
 $('jgh').onclick=()=>{ const r=buildReq(false); if(!r) return;
-  open('https://github.com/'+REPO+'/issues/new?title='+encodeURIComponent('加入申请：'+r.person.name)+'&body='+encodeURIComponent('```json\n'+JSON.stringify(r)+'\n```'),'_blank'); };
+  open('https://github.com/'+REPO+'/issues/new?title='+encodeURIComponent('加入申请：'+r.people[0].name)+'&body='+encodeURIComponent(summary(r)+'\n\n```json\n'+JSON.stringify(r)+'\n```'),'_blank'); };
+const normReq=r=>r.people||[Object.assign({k:'#1',rel:r.rel,to:r.to,toName:r.toName},r.person)];
 function readReq(txt){
-  try{ const r=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]); if(r.type!=='join-request'||!r.person) throw 0;
-    pending=r; const t=byId(r.to);
-    $('rv').textContent=L((r.person.name||'?')+' 想作为「'+(t?t.name:(r.toName||'?')+'（已找不到）')+'」的'+(RL[r.rel]||'子女')+'加入。',(r.person.name||'?')+' wants to join as the '+(r.rel||'child')+' of “'+(t?t.name:(r.toName||'?')+' (not found)')+'”.'); $('rvok').hidden=!t; }
+  try{ const r=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]); if(r.type!=='join-request'||!(r.people||r.person)) throw 0;
+    pending=r; const list=normReq(r);
+    const tn=o=>{ const x=list.find(q=>q.k===o.to), t=byId(o.to); return x?x.name:(t?t.name:(o.toName||'?')+L('（已找不到）',' (not found)')); };
+    $('rv').textContent=(r.from?L('来自：','From: ')+r.from+'\n':'')+list.map(o=>(o.name||'?')+' → '+L('「'+tn(o)+'」的'+(RL[o.rel]||'子女'),'the '+(o.rel||'child')+' of '+tn(o))).join('\n');
+    $('rvok').hidden=false; }
   catch(_){ pending=null; $('rvok').hidden=true; $('rv').textContent='读取失败：请粘贴完整的申请内容（以 { 开头），或选择申请文件。'; }
 }
 $('rd').onclick=()=>readReq($('rt').value);
 $('rf').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ $('rt').value=rd.result; readReq(rd.result); }; rd.readAsText(f); e.target.value=''; };
 $('rno').onclick=()=>{ $('rt').value=''; pending=null; $('rv').textContent=''; $('rvok').hidden=true; };
 $('rvok').onclick=()=>{
-  const r=pending; if(!r||!byId(r.to)) return alert('找不到对应成员。');
-  sel=r.to; addRel(RL[r.rel]?r.rel:'child'); if(sel===r.to) return;
-  const o=r.person, p=byId(sel), S=(v,n)=>String(v==null?'':v).slice(0,n);
-  Object.assign(p,{name:S(o.name,60)||'新成员',cname:S(o.cname,40),gender:['m','f'].includes(o.gender)?o.gender:'',birth:S(o.birth,20),alive:o.alive!==false,note:S(o.note,500)});
-  if(typeof o.photo==='string'&&/^data:image\/(jpeg|png);base64,/.test(o.photo)&&o.photo.length<400000) p.photo=o.photo;
-  save(); openPanel(p.id); closeModal(); pending=null;
+  const r=pending; if(!r) return; let pend=normReq(r).slice(), map={}, made=0, guard=0;
+  const S=(v,n)=>String(v==null?'':v).slice(0,n);
+  while(pend.length&&guard++<30){
+    const left=[];
+    pend.forEach(o=>{
+      const tid=map[o.to]||(byId(o.to)?o.to:''); if(!tid){ left.push(o); return; }
+      sel=tid; const n0=people.length; addRel(RL[o.rel]?o.rel:'child'); if(people.length===n0) return;
+      const p=byId(sel); map[o.k]=p.id; made++;
+      const so={}; SOC.forEach(([k])=>{ const v=S(o.social&&o.social[k],200).trim(); if(v) so[k]=v; });
+      Object.assign(p,{name:S(o.name,60)||'新成员',cname:S(o.cname,40),gender:['m','f'].includes(o.gender)?o.gender:'',birth:S(o.birth,20),alive:o.alive!==false,note:S(o.note,500)});
+      if(Object.keys(so).length) p.social=so;
+      if(typeof o.photo==='string'&&/^data:image\/(jpeg|png);base64,/.test(o.photo)&&o.photo.length<400000) p.photo=o.photo;
+    });
+    if(left.length===pend.length) break; pend=left;
+  }
+  save(); toggleEmpty(); closeModal(); pending=null; alert(L('已加入 '+made+' 位成员。','Added '+made+' member(s).'));
 };
 
 /* ---------- 工具栏 ---------- */
@@ -512,6 +575,10 @@ new MutationObserver(ms=>ms.forEach(m=>{ if(m.type==='characterData') trNode(m.t
 const setHint=()=>{ $('hint').textContent=M2?'拖动平移 · 滚轮缩放':'拖动旋转 · Shift/右键拖动平移 · 滚轮缩放'; };
 $('lang').value=lang; $('lang').onchange=()=>{ lang=$('lang').value; try{localStorage.setItem('xingpu-lang',lang)}catch(e){} applyLang(); };
 $('tg2d').onclick=()=>{ M2=!M2; try{localStorage.setItem(KEY+'-2d',M2?'1':'0')}catch(e){} fit(); syncB(); setHint(); };
+if(!READONLY) $('menu').prepend($('joinBtn'));
+$('mm').onclick=()=>{ const o=$('menu').classList.toggle('open'); $('mm').setAttribute('aria-expanded',o); };
+$('menu').addEventListener('click',e=>{ if(e.target.closest('button:not(#inv):not(#invE)')) $('menu').classList.remove('open'); });
+cv.addEventListener('pointerdown',()=>$('menu').classList.remove('open'));
 applyLang();
 resize(); view={x:innerWidth/2,y:innerHeight/2,k:1}; load(); requestAnimationFrame(frame);
 </script>
